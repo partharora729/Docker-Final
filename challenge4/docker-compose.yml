@@ -1,0 +1,47 @@
+version: '3.8'
+services:
+  db:
+    build:
+      dockerfile: docker/db/Dockerfile
+      context : .
+    image: mariadb:latest
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_USERNAME: ${DB_USERNAME}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  node-service:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3001:3000"
+      - "3002:3000"
+      - "5001:3000"
+
+    depends_on:
+      - db
+
+  nginx:
+    build:
+      context: ./docker/nginx
+      dockerfile: Dockerfile
+    image: nginx:latest
+    ports:
+      - "8080:80"
+    depends_on:
+      - node-service
+
+volumes:
+  db_data:
+
